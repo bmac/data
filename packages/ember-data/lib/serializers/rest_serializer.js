@@ -10,6 +10,7 @@ var map = Ember.ArrayPolyfills.map;
 var camelize = Ember.String.camelize;
 
 import { singularize } from "ember-inflector/system/string";
+import { pluralize } from "ember-inflector/lib/system/string";
 
 function coerceId(id) {
   return id == null ? null : id + '';
@@ -264,9 +265,7 @@ export default JSONSerializer.extend({
   extractSingle: function(store, primaryType, rawPayload, recordId) {
     var payload = this.normalizePayload(rawPayload);
 
-    var rootProp = this.rootForType(store, primaryType, payload);
-
-    var typeName = this.typeForRoot(rootProp);
+    var rootProp = this.rootForType(primaryType.typeKey);
 
     var primaryPayload = this.sideloadRecords(store, primaryType, payload);
     var typeSerializer = store.serializerFor(primaryType);
@@ -292,7 +291,7 @@ export default JSONSerializer.extend({
         if (isFirstCreatedRecord || isUpdatedRecord) {
           primaryRecord = hash;
         } else {
-          store.push(typeName, hash);
+          store.push(primaryType.typeKey, hash);
         }
       }, this);
 
@@ -402,7 +401,7 @@ export default JSONSerializer.extend({
   extractArray: function(store, primaryType, rawPayload) {
     var payload = this.normalizePayload(rawPayload);
 
-    var rootProp = this.rootForType(store, primaryType, payload);
+    var rootProp = this.rootForType(primaryType.typeKey);
 
     var primaryPayload = this.sideloadRecords(store, primaryType, rawPayload);
     var typeSerializer = store.serializerFor(primaryType);
@@ -414,26 +413,8 @@ export default JSONSerializer.extend({
     return primaryArray;
   },
 
-  rootForType: function(store, primaryType, payload) {
-    // TODO rewrite this function. Right now it is very brittle and needs to
-    // be called before sideloadRecords and so it can itterate over
-    // all the keys. this can probabally follow a convention to
-    // generate the root based on the type but it was easier to just
-    // move the existing logic while refactoring the other extract functions
-
-    var primaryTypeKey;
-
-    for (var prop in payload) {
-      var typeKey = prop;
-      var primaryTypeName = primaryType.typeKey;
-      var typeName = this.typeForRoot(typeKey);
-      var type = store.modelFor(typeName);
-      var isPrimary = (type.typeKey === primaryTypeName);
-      if (isPrimary) {
-        primaryTypeKey = prop;
-      }
-    }
-    return primaryTypeKey;
+  rootForType: function(key) {
+    return pluralize(camelize(key));
   },
 
   /**
