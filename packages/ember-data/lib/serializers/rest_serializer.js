@@ -270,6 +270,10 @@ export default JSONSerializer.extend({
     var primaryPayload = this.sideloadRecords(store, primaryType, payload);
     var typeSerializer = store.serializerFor(primaryType);
 
+    if (!primaryPayload) {
+      return primaryPayload;
+    }
+
     if (Ember.typeOf(primaryPayload) !== "array" ) {
       return this.normalize(primaryType, primaryPayload, rootProp);
     }
@@ -720,7 +724,6 @@ export default JSONSerializer.extend({
       var type = store.modelFor(typeName);
       var typeSerializer = store.serializerFor(type);
       var isPrimary = (!forcedSecondary && (type.typeKey === primaryTypeName));
-
       if (isPrimary) {
         primaryArray = payload[prop];
         //delete payload[prop];
