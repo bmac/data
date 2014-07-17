@@ -711,6 +711,8 @@ export default JSONSerializer.extend({
     var primaryTypeName = primaryType.typeKey;
     var primaryArray;
 
+    var rootProp = this.rootForType(primaryTypeName);
+
     for (var prop in payload) {
       var typeKey = prop;
       var forcedSecondary = false;
@@ -720,10 +722,15 @@ export default JSONSerializer.extend({
         typeKey = prop.substr(1);
       }
 
+
       var typeName = this.typeForRoot(typeKey);
       var type = store.modelFor(typeName);
       var typeSerializer = store.serializerFor(type);
       var isPrimary = (!forcedSecondary && (type.typeKey === primaryTypeName));
+      if (isPrimary && prop !== rootProp) {
+        throw new Error('primary prop in payload did not equal rootForType prop. payloadProp: ' + prop + ' rootForTypeProp: ' +rootProp);
+      }
+
       if (isPrimary) {
         primaryArray = payload[prop];
         //delete payload[prop];

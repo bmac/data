@@ -1,0 +1,11 @@
+Created a SideLoadMixin to contain most of the logic for extracting side-loaded documents.
+Moved several non sideloaded related methods to the JSONSerializer
+- Move `normalizeAttributes` to the `JSONSerializer` (mirrors `serializeAttributes`)
+- Move `normalizeRelationships` to the `JSONSerializer`
+- Move `normalizePayload` to the `JSONSerializer`
+- Move `extractSingle` into the `SideLoadMixin`
+- Move `pushPayload` into the `SideLoadMixin`
+- Move `typeForRoot` into `SideLoadMixin` (used by `extractSingle`, `extractArray`, `pushPayload`)
+- Move `serializeIntoHash` into `SideLoadMixin`
+- Remove `serialize` from `RESTSerializer` (it just calls _super)
+- Move `normalize` and `normalizeHash` into the `SideLoadMixin`
