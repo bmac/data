@@ -10,6 +10,9 @@ var get = Ember.get,
     capitalize = Ember.String.capitalize,
     decamelize = Ember.String.decamelize,
     underscore = Ember.String.underscore;
+
+import { pluralize } from "ember-inflector/system/string";
+
 /**
   The ActiveModelSerializer is a subclass of the RESTSerializer designed to integrate
   with a JSON API that uses an underscored naming convention instead of camelCasing.
@@ -169,6 +172,9 @@ var ActiveModelSerializer = RESTSerializer.extend({
   },
 
   // EXTRACT
+  rootForType: function(key) {
+    return pluralize(underscore(key));
+  },
 
   /**
     Add extra step to `DS.RESTSerializer.normalize` so links are normalized.

@@ -54,6 +54,11 @@ test("extractArray with custom typeForRoot", function() {
     return Ember.String.singularize(camelized);
   };
 
+  env.restSerializer.rootForType = function(type) {
+    var underscored = Ember.String.underscore(type);
+    return Ember.String.pluralize(underscored);
+  };
+
   var jsonHash = {
     home_planets: [{id: "1", name: "Umber", superVillains: [1]}],
     super_villains: [{id: "1", firstName: "Tom", lastName: "Dale", homePlanet: "1"}]
@@ -127,7 +132,7 @@ test("normalizePayload is called during extractSingle", function() {
   var applicationSerializer = env.container.lookup('serializer:application');
   var data = applicationSerializer.extractSingle(env.store, EvilMinion, jsonHash);
 
-  equal(data.name, jsonHash.response.evilMinion.name, "normalize reads off the response");
+  equal(data.name, 'Tom Dale', "normalize reads off the response");
 });
 
 test("extractArray can load secondary records of the same type without affecting the query count", function() {
