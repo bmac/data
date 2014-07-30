@@ -271,8 +271,6 @@ export default JSONSerializer.extend({
       rootProp = singularize(rootProp);
     }
 
-    console.log(rootProp, payload, recordId);
-
     var primaryPayload = payload[rootProp];
     delete payload[rootProp];
 
