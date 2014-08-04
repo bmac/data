@@ -274,13 +274,7 @@ export default JSONSerializer.extend({
 
     var typeSerializer = store.serializerFor(primaryType);
 
-    if (!primaryPayload) {
-      // TODO this was needed to get integration/adapter/rest_adapter
-      // - REST Adapter: findMany - findMany does not coalesce by
-      // default test to pass. Look into this more
-      if (recordId) {
-        return store.recordForId(primaryType.typeKey, recordId);
-      }
+    if (primaryPayload == null) {
       return primaryPayload;
     }
 
