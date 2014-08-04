@@ -3,6 +3,7 @@
 */
 
 import JSONSerializer from "ember-data/serializers/json_serializer";
+import SideloadMixin from "ember-data/serializers/sideload_mixin";
 var get = Ember.get;
 var set = Ember.set;
 var forEach = Ember.ArrayPolyfills.forEach;
@@ -10,6 +11,7 @@ var map = Ember.ArrayPolyfills.map;
 var camelize = Ember.String.camelize;
 
 import { singularize } from "ember-inflector/system/string";
+import { pluralize } from "ember-inflector/system/string";
 
 function coerceId(id) {
   return id == null ? null : id + '';
@@ -261,33 +263,32 @@ export default JSONSerializer.extend({
     @param {String} recordId
     @return {Object} the primary response to the original request
   */
-  extractSingle: function(store, primaryType, rawPayload, recordId) {
-    var payload = this.normalizePayload(rawPayload);
-    var primaryTypeName = primaryType.typeKey;
+  extractSingle: function(store, primaryType, payload, recordId) {
+    var rootProp = this.rootForType(primaryType.typeKey);
+    if (!(rootProp in payload)) {
+      // Legacy singular name support
+      rootProp = singularize(rootProp);
+    }
+
+    var primaryPayload = payload[rootProp];
+
+    var typeSerializer = store.serializerFor(primaryType);
+
+    if (primaryPayload == null) {
+      return primaryPayload;
+    }
+
+    if (Ember.typeOf(primaryPayload) !== "array" ) {
+      return this.normalize(primaryType, primaryPayload, rootProp);
+    }
+
     var primaryRecord;
+    /*jshint loopfunc:true*/
+    forEach.call(primaryPayload, function(hash) {
+      hash = typeSerializer.normalize(primaryType, hash, rootProp);
 
-    for (var prop in payload) {
-      var typeName  = this.typeForRoot(prop);
-      var type = store.modelFor(typeName);
-      var isPrimary = type.typeKey === primaryTypeName;
-      var value = payload[prop];
-
-      // legacy support for singular resources
-      if (isPrimary && Ember.typeOf(value) !== "array" ) {
-        primaryRecord = this.normalize(primaryType, value, prop);
-        continue;
-      }
-
-      /*jshint loopfunc:true*/
-      forEach.call(value, function(hash) {
-        var typeName = this.typeForRoot(prop);
-        var type = store.modelFor(typeName);
-        var typeSerializer = store.serializerFor(type);
-
-        hash = typeSerializer.normalize(type, hash, prop);
-
-        var isFirstCreatedRecord = isPrimary && !recordId && !primaryRecord;
-        var isUpdatedRecord = isPrimary && coerceId(hash.id) === recordId;
+        var isFirstCreatedRecord = !recordId && !primaryRecord;
+        var isUpdatedRecord = coerceId(hash.id) === recordId;
 
         // find the primary record.
         //
@@ -298,10 +299,9 @@ export default JSONSerializer.extend({
         if (isFirstCreatedRecord || isUpdatedRecord) {
           primaryRecord = hash;
         } else {
-          store.push(typeName, hash);
+          store.push(primaryType.typeKey, hash);
         }
       }, this);
-    }
 
     return primaryRecord;
   },
@@ -406,38 +406,27 @@ export default JSONSerializer.extend({
     @return {Array} The primary array that was returned in response
       to the original query.
   */
-  extractArray: function(store, primaryType, rawPayload) {
-    var payload = this.normalizePayload(rawPayload);
-    var primaryTypeName = primaryType.typeKey;
-    var primaryArray;
+  extractArray: function(store, primaryType, payload) {
 
-    for (var prop in payload) {
-      var typeKey = prop;
-      var forcedSecondary = false;
-
-      if (prop.charAt(0) === '_') {
-        forcedSecondary = true;
-        typeKey = prop.substr(1);
-      }
-
-      var typeName = this.typeForRoot(typeKey);
-      var type = store.modelFor(typeName);
-      var typeSerializer = store.serializerFor(type);
-      var isPrimary = (!forcedSecondary && (type.typeKey === primaryTypeName));
-
-      /*jshint loopfunc:true*/
-      var normalizedArray = map.call(payload[prop], function(hash) {
-        return typeSerializer.normalize(type, hash, prop);
-      }, this);
-
-      if (isPrimary) {
-        primaryArray = normalizedArray;
-      } else {
-        store.pushMany(typeName, normalizedArray);
-      }
+    var rootProp = this.rootForType(primaryType.typeKey);
+    if (!(rootProp in payload)) {
+      // Legacy singular name support
+      rootProp = singularize(rootProp);
     }
 
+    var primaryPayload = payload[rootProp];
+
+    var typeSerializer = store.serializerFor(primaryType);
+
+    var primaryArray = map.call(primaryPayload, function(hash) {
+      return typeSerializer.normalize(primaryType, hash, rootProp);
+    }, this);
+
     return primaryArray;
+  },
+
+  rootForType: function(key) {
+    return pluralize(camelize(key));
   },
 
   /**
@@ -725,4 +714,4 @@ export default JSONSerializer.extend({
     key = this.keyForAttribute ? this.keyForAttribute(key) : key;
     json[key + "Type"] = belongsTo.constructor.typeKey;
   }
-});
+}, SideloadMixin);
