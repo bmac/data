@@ -690,7 +690,7 @@ export default Ember.Object.extend({
   */
   extract: function(store, type, payload, id, requestType) {
     this.extractMeta(store, type, payload);
-
+    payload = this.normalizePayload(payload);
     var specificExtract = "extract" + requestType.charAt(0).toUpperCase() + requestType.substr(1);
     return this[specificExtract](store, type, payload, id, requestType);
   },
@@ -884,7 +884,6 @@ export default Ember.Object.extend({
     @return {Object} json The deserialized payload
   */
   extractSingle: function(store, type, payload, id, requestType) {
-    payload = this.normalizePayload(payload);
     return this.normalize(type, payload);
   },
 
@@ -913,10 +912,9 @@ export default Ember.Object.extend({
     @return {Array} array An array of deserialized objects
   */
   extractArray: function(store, type, arrayPayload, id, requestType) {
-    var normalizedPayload = this.normalizePayload(arrayPayload);
     var serializer = this;
 
-    return map.call(normalizedPayload, function(singlePayload) {
+    return map.call(arrayPayload, function(singlePayload) {
       return serializer.normalize(type, singlePayload);
     });
   },

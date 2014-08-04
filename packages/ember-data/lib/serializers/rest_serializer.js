@@ -3,6 +3,7 @@
 */
 
 import JSONSerializer from "ember-data/serializers/json_serializer";
+import SideloadMixin from "ember-data/serializers/sideload_mixin";
 var get = Ember.get;
 var set = Ember.set;
 var forEach = Ember.ArrayPolyfills.forEach;
@@ -262,9 +263,7 @@ export default JSONSerializer.extend({
     @param {String} recordId
     @return {Object} the primary response to the original request
   */
-  extractSingle: function(store, primaryType, rawPayload, recordId) {
-    var payload = this.normalizePayload(rawPayload);
-
+  extractSingle: function(store, primaryType, payload, recordId) {
     var rootProp = this.rootForType(primaryType.typeKey);
     if (!(rootProp in payload)) {
       // Legacy singular name support
@@ -272,9 +271,6 @@ export default JSONSerializer.extend({
     }
 
     var primaryPayload = payload[rootProp];
-    delete payload[rootProp];
-
-    this.sideloadRecords(store, payload);
 
     var typeSerializer = store.serializerFor(primaryType);
 
@@ -416,8 +412,7 @@ export default JSONSerializer.extend({
     @return {Array} The primary array that was returned in response
       to the original query.
   */
-  extractArray: function(store, primaryType, rawPayload) {
-    var payload = this.normalizePayload(rawPayload);
+  extractArray: function(store, primaryType, payload) {
 
     var rootProp = this.rootForType(primaryType.typeKey);
     if (!(rootProp in payload)) {
@@ -426,10 +421,6 @@ export default JSONSerializer.extend({
     }
 
     var primaryPayload = payload[rootProp];
-    delete payload[rootProp];
-
-
-    this.sideloadRecords(store, rawPayload);
 
     var typeSerializer = store.serializerFor(primaryType);
 
@@ -728,24 +719,5 @@ export default JSONSerializer.extend({
     var belongsTo = get(record, key);
     key = this.keyForAttribute ? this.keyForAttribute(key) : key;
     json[key + "Type"] = belongsTo.constructor.typeKey;
-  },
-
-  sideloadRecords: function(store, payload) {
-    for (var prop in payload) {
-      var typeKey = prop;
-
-      if (prop.charAt(0) === '_') {
-        typeKey = prop.substr(1);
-      }
-
-      var typeName = this.typeForRoot(typeKey);
-      var type = store.modelFor(typeName);
-      var typeSerializer = store.serializerFor(type);
-      /*jshint loopfunc:true*/
-      var normalizedArray = map.call(payload[prop], function(hash) {
-        return typeSerializer.normalize(type, hash, prop);
-      }, this);
-      store.pushMany(typeName, normalizedArray);
-    }
   }
-});
+}, SideloadMixin);

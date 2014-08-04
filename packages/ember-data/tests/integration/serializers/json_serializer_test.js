@@ -270,7 +270,7 @@ test("Serializer should respect keyForRelationship when extracting records", fun
   deepEqual(post.comments, ['1']);
 });
 
-test("normalizePayload is called during extractSingle", function() {
+test("normalizePayload is called during extract", function() {
   env.container.register('serializer:post', DS.JSONSerializer.extend({
     normalizePayload: function(payload) {
       return payload.response;
@@ -284,7 +284,7 @@ test("normalizePayload is called during extractSingle", function() {
     }
   };
 
-  post = env.container.lookup("serializer:post").extractSingle(env.store, Post, jsonHash);
+  post = env.container.lookup("serializer:post").extract(env.store, Post, jsonHash, 1, 'find');
 
   equal(post.id, "1");
   equal(post.title, "Rails is omakase");

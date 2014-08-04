@@ -117,7 +117,7 @@ test("serialize polymorphicType with decamelized typeKey", function() {
   deepEqual(json["evilMinionType"], "yellowMinion");
 });
 
-test("normalizePayload is called during extractSingle", function() {
+test("normalizePayload is called during extract", function() {
   env.container.register('serializer:application', DS.RESTSerializer.extend({
     normalizePayload: function(payload) {
       return payload.response;
@@ -130,7 +130,7 @@ test("normalizePayload is called during extractSingle", function() {
   } };
 
   var applicationSerializer = env.container.lookup('serializer:application');
-  var data = applicationSerializer.extractSingle(env.store, EvilMinion, jsonHash);
+  var data = applicationSerializer.extract(env.store, EvilMinion, jsonHash, 1, 'find');
 
   equal(data.name, 'Tom Dale', "normalize reads off the response");
 });
