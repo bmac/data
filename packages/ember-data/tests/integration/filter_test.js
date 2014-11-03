@@ -510,6 +510,20 @@ test("it is possible to filter created records by isReloading", function() {
   }));
 });
 
+test("it is possible to filter by async value", function() {
+  var filterFn = function(obj){
+    return new Em.RSVP.resolve( obj.get('id') === "42");
+  }
+
+  var person = store.pushMany('person', [
+        { id: "42" },
+        { id: "2" }
+      ]);
+
+  var recordArray = store.filter('person', filterFn);
+
+  equal(recordArray.get('length'), 1, 'expected the filter array to have zero records');
+});
 
 // SERVER SIDE TESTS
 var edited;
