@@ -14,6 +14,7 @@ import {
 var get = Ember.get;
 var forEach = Ember.EnumerableUtils.forEach;
 var indexOf = Ember.EnumerableUtils.indexOf;
+var Promise = Ember.RSVP.Promise;
 
 /**
   @class RecordArrayManager
@@ -114,7 +115,8 @@ export default Ember.Object.extend({
     @param {Number|String} clientId
   */
   updateRecordArray: function(array, filter, type, record) {
-    var shouldBeInArray;
+    var shouldBeInArray,
+        self = this;
 
     if (!filter) {
       shouldBeInArray = true;
@@ -122,17 +124,19 @@ export default Ember.Object.extend({
       shouldBeInArray = filter(record);
     }
 
-    var recordArrays = this.recordArraysForRecord(record);
 
-    if (shouldBeInArray) {
-      if (!recordArrays.has(array)) {
-        array.pushRecord(record);
-        recordArrays.add(array);
+    Promise.resolve(shouldBeInArray).then(function(shouldBeInArray){
+      var recordArrays = self.recordArraysForRecord(record);
+      if (shouldBeInArray) {
+        if (!recordArrays.has(array)) {
+          array.pushRecord(record);
+          recordArrays.add(array);
+        }
+      } else if (!shouldBeInArray) {
+        recordArrays.delete(array);
+        array.removeRecord(record);
       }
-    } else if (!shouldBeInArray) {
-      recordArrays.delete(array);
-      array.removeRecord(record);
-    }
+    });
   },
 
   /**
