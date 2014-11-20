@@ -15,6 +15,7 @@ var get = Ember.get;
 var forEach = Ember.EnumerableUtils.forEach;
 var indexOf = Ember.EnumerableUtils.indexOf;
 var Promise = Ember.RSVP.Promise;
+var guidFor = Ember.guidFor;
 
 /**
   @class RecordArrayManager
@@ -116,7 +117,9 @@ export default Ember.Object.extend({
   */
   updateRecordArray: function(array, filter, type, record) {
     var shouldBeInArray,
-        self = this;
+        self = this,
+        key = guidFor(record),
+        currentPromise = null;
 
     if (!filter) {
       shouldBeInArray = true;
@@ -124,8 +127,17 @@ export default Ember.Object.extend({
       shouldBeInArray = filter(record);
     }
 
+    currentPromise = Promise.resolve(shouldBeInArray);
+    array.lastFilterPromises[key] = currentPromise;
 
-    Promise.resolve(shouldBeInArray).then(function(shouldBeInArray){
+    currentPromise.then(function(shouldBeInArray){
+      // fighting race conditions here
+      if (currentPromise !== array.lastFilterPromises[key]) {
+        return;
+      }
+
+      delete array.lastFilterPromises[key];
+
       var recordArrays = self.recordArraysForRecord(record);
       if (shouldBeInArray) {
         if (!recordArrays.has(array)) {
