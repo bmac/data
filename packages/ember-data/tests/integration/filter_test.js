@@ -511,16 +511,19 @@ test("it is possible to filter created records by isReloading", function() {
 });
 
 test("it is possible to filter by async value", function() {
+  var recordArray;
   var filterFn = function(obj){
-    return new Em.RSVP.resolve( obj.get('id') === "42");
-  }
+    return new Ember.RSVP.resolve( obj.get('id') === "42");
+  };
 
-  var person = store.pushMany('person', [
-        { id: "42" },
-        { id: "2" }
-      ]);
+  run(function() {
+    var person = store.pushMany('person', [
+      { id: "42" },
+      { id: "2" }
+    ]);
 
-  var recordArray = store.filter('person', filterFn);
+    recordArray = store.filter('person', filterFn);
+  });
 
   equal(recordArray.get('length'), 1, 'expected the filter array to have one record');
 });
@@ -529,31 +532,33 @@ test("filter cares only about latest value from filter function", function() {
   var resolve_1 = null,
       resolve_2 = null;
   var filterFn1 = function(obj){
-    return new Em.RSVP.Promise(function(resolve){
+    return new Ember.RSVP.Promise(function(resolve){
       resolve_1 = resolve;
     });
-  }
+  };
   var filterFn2 = function(obj){
-    return new Em.RSVP.Promise(function(resolve){
+    return new Ember.RSVP.Promise(function(resolve){
       resolve_2 = resolve;
     });
-  }
+  };
 
-  var person = store.push('person', { id: "42" } );
+  run(function() {
+    var person = store.push('person', { id: '42' } );
 
-  store.filter('person', filterFn1).then(async(function(recordArray) {
-    Em.run(function(){
-      recordArray.set('filterFunction', filterFn2);
+    store.filter('person', filterFn1).then(function(recordArray) {
+      run(function(){
+        recordArray.set('filterFunction', filterFn2);
+        equal(recordArray.get('length'), 0, 'expected the filter array to have zero records');
+      });
+
+      run(function(){
+        resolve_2(false);
+        resolve_1(true);
+      });
+
       equal(recordArray.get('length'), 0, 'expected the filter array to have zero records');
     });
-
-    Em.run(function(){
-      resolve_2(false);
-      resolve_1(true);
-    });
-
-    equal(recordArray.get('length'), 0, 'expected the filter array to have zero records');
-  }));
+  });
 });
 
 // SERVER SIDE TESTS

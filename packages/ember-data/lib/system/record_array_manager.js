@@ -14,7 +14,6 @@ import {
 var get = Ember.get;
 var forEach = Ember.EnumerableUtils.forEach;
 var indexOf = Ember.EnumerableUtils.indexOf;
-var Promise = Ember.RSVP.Promise;
 var guidFor = Ember.guidFor;
 
 /**
@@ -116,10 +115,10 @@ export default Ember.Object.extend({
     @param {Number|String} clientId
   */
   updateRecordArray: function(array, filter, type, record) {
-    var shouldBeInArray,
-        self = this,
-        key = guidFor(record),
-        currentPromise = null;
+    var shouldBeInArray;
+    var self = this;
+    var key = guidFor(record);
+    var currentPromise = null;
 
     if (!filter) {
       shouldBeInArray = true;
@@ -127,28 +126,34 @@ export default Ember.Object.extend({
       shouldBeInArray = filter(record);
     }
 
-    currentPromise = Promise.resolve(shouldBeInArray);
-    array.lastFilterPromises[key] = currentPromise;
-
-    currentPromise.then(function(shouldBeInArray){
-      // fighting race conditions here
-      if (currentPromise !== array.lastFilterPromises[key]) {
-        return;
-      }
-
-      delete array.lastFilterPromises[key];
-
-      var recordArrays = self.recordArraysForRecord(record);
-      if (shouldBeInArray) {
-        if (!recordArrays.has(array)) {
-          array.pushRecord(record);
-          recordArrays.add(array);
+    if (!shouldBeInArray || !get(shouldBeInArray, 'then')) {
+      this._syncRecordArray(record, array, shouldBeInArray);
+    } else {
+      currentPromise = shouldBeInArray;
+      array.lastFilterPromises[key] = currentPromise;
+      currentPromise.then(function(shouldBeInArray){
+        // fighting race conditions here
+        if (currentPromise !== array.lastFilterPromises[key]) {
+          return;
         }
-      } else if (!shouldBeInArray) {
-        recordArrays.delete(array);
-        array.removeRecord(record);
+
+        delete array.lastFilterPromises[key];
+        self._syncRecordArray(record, array, shouldBeInArray);
+      });
+    }
+  },
+
+  _syncRecordArray: function(record, array, shouldBeInArray) {
+    var recordArrays = this.recordArraysForRecord(record);
+    if (shouldBeInArray) {
+      if (!recordArrays.has(array)) {
+        array.pushRecord(record);
+        recordArrays.add(array);
       }
-    });
+    } else if (!shouldBeInArray) {
+      recordArrays.delete(array);
+      array.removeRecord(record);
+    }
   },
 
   /**
