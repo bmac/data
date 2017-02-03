@@ -2780,3 +2780,47 @@ test("unloading and reloading a record with hasMany relationship - #3084", funct
     assert.equal(get(message, 'user.id'), 'user-1');
   });
 });
+
+
+test("removed records should stay removed when there is an error saving the parent", function(assert) {
+  var user;
+  var message;
+
+  env.adapter.updateRecord = function () {
+    return Ember.RSVP.Promise.reject(new DS.AdapterError());
+  }
+
+  run(function() {
+    env.store.push({
+      data: [{
+        type: 'user',
+        id: 'user-1',
+        attributes: {
+          name: 'Adolfo Builes'
+        },
+        relationships: {
+          messages: {
+            data: [
+              { type: 'message', id: 'message-1' }
+            ]
+          }
+        }
+      }, {
+        type: 'message',
+        id: 'message-1'
+      }]
+    });
+
+    user = env.store.peekRecord('user', 'user-1');
+    message = env.store.peekRecord('message', 'message-1');
+  });
+
+  run(function() {
+    get(user, 'messages').removeObject(message);
+    user.save().catch(() => null);
+  });
+
+  run(function() {
+    assert.equal(get(user, 'messages.length'), 0, 'The message should be removed even of the save errors');
+  });
+});
