@@ -121,11 +121,6 @@ test('#_setInternalModels', function(assert) {
 
   assert.equal(didAddRecord, 0, 'no records should have been added yet');
 
-  let didLoad = 0;
-  recordArray.on('didLoad', function() {
-    didLoad++;
-  });
-
   let links = { foo: 1 };
   let meta = { bar: 2 };
 
@@ -142,137 +137,7 @@ test('#_setInternalModels', function(assert) {
       model2
     ].map(x => x.getRecord()), 'should now contain the loaded records');
 
-    assert.equal(didLoad, 0, 'didLoad event should not have fired');
     assert.equal(recordArray.get('links').foo, 1);
     assert.equal(recordArray.get('meta').bar, 2);
   });
-  assert.equal(didLoad, 1, 'didLoad event should have fired once');
-});
-
-test('change events when receiving a new query payload', function(assert) {
-  assert.expect(37);
-
-  let arrayDidChange = 0;
-  let contentDidChange = 0;
-  let didAddRecord = 0;
-
-  function add(array) {
-    didAddRecord++;
-    assert.equal(array, recordArray);
-  }
-
-  function del(array) {
-    assert.equal(array, recordArray);
-  }
-
-  let recordArray = AdapterPopulatedRecordArray.create({
-    query: 'some-query'
-  });
-
-  let model1 = internalModelFor({ id: '1', name: 'Scumbag Dale' });
-  let model2 = internalModelFor({ id: '2', name: 'Scumbag Katz' })
-
-  model1._recordArrays = { add, delete: del };
-  model2._recordArrays = { add, delete: del };
-
-  run(() => {
-    recordArray._setInternalModels([
-      model1,
-      model2
-    ], {});
-  });
-
-  assert.equal(didAddRecord, 2, 'expected 2 didAddRecords');
-  assert.deepEqual(recordArray.map(x => x.name), ['Scumbag Dale', 'Scumbag Katz']);
-
-  assert.equal(arrayDidChange, 0, 'array should not yet have emitted a change event');
-  assert.equal(contentDidChange, 0, 'recordArray.content should not have changed');
-
-  recordArray.addObserver('content', function() {
-    contentDidChange++;
-  });
-
-  recordArray.one('@array:change', function(array, startIdx, removeAmt, addAmt) {
-    arrayDidChange++;
-
-    // first time invoked
-    assert.equal(array, recordArray, 'should be same record array as above');
-    assert.equal(startIdx,  0, 'expected startIdx');
-    assert.equal(removeAmt, 2, 'expcted removeAmt');
-    assert.equal(addAmt,    2, 'expected addAmt');
-  });
-
-  assert.equal(recordArray.get('isLoaded'), true, 'should be considered loaded');
-  assert.equal(recordArray.get('isUpdating'), false, 'should not yet be updating');
-
-  assert.equal(arrayDidChange, 0);
-  assert.equal(contentDidChange, 0, 'recordArray.content should not have changed');
-
-  arrayDidChange = 0;
-  contentDidChange = 0;
-  didAddRecord = 0;
-
-  let model3 = internalModelFor({ id: '3', name: 'Scumbag Penner' });
-  let model4 = internalModelFor({ id: '4', name: 'Scumbag Hamilton' });
-
-  model3._recordArrays = { add, delete: del };
-  model4._recordArrays = { add, delete: del };
-
-  run(() => {
-    // re-query
-    recordArray._setInternalModels([
-      model3,
-      model4
-    ], {});
-  });
-
-  assert.equal(didAddRecord, 2, 'expected 2 didAddRecords');
-  assert.equal(recordArray.get('isLoaded'), true, 'should be considered loaded');
-  assert.equal(recordArray.get('isUpdating'), false, 'should no longer be updating');
-
-  assert.equal(arrayDidChange, 1, 'record array should have omitted ONE change event');
-  assert.equal(contentDidChange, 0, 'recordArray.content should not have changed');
-
-  assert.deepEqual(recordArray.map(x => x.name), ['Scumbag Penner', 'Scumbag Hamilton']);
-
-  arrayDidChange = 0; // reset change event counter
-  contentDidChange = 0; // reset change event counter
-  didAddRecord = 0;
-
-  recordArray.one('@array:change', function(array, startIdx, removeAmt, addAmt) {
-    arrayDidChange++;
-
-    // first time invoked
-    assert.equal(array, recordArray, 'should be same recordArray as above');
-    assert.equal(startIdx,  0, 'expected startIdx');
-    assert.equal(removeAmt, 2, 'expcted removeAmt');
-    assert.equal(addAmt,    1, 'expected addAmt');
-  });
-
-  // re-query
-  assert.equal(recordArray.get('isLoaded'), true, 'should be considered loaded');
-  assert.equal(recordArray.get('isUpdating'), false, 'should not yet be updating');
-
-  assert.equal(arrayDidChange, 0, 'record array should not yet have omitted a change event');
-  assert.equal(contentDidChange, 0, 'recordArray.content should not have changed');
-
-  let model5 = internalModelFor({ id: '3', name: 'Scumbag Penner' })
-
-  model5._recordArrays = { add, delete: del };
-
-  run(() => {
-    recordArray._setInternalModels([
-      model5
-    ], {});
-  });
-
-  assert.equal(didAddRecord, 1, 'expected 0 didAddRecord');
-
-  assert.equal(recordArray.get('isLoaded'), true, 'should be considered loaded');
-  assert.equal(recordArray.get('isUpdating'), false, 'should not longer be updating');
-
-  assert.equal(arrayDidChange, 1, 'record array should have emitted one change event');
-  assert.equal(contentDidChange, 0, 'recordArray.content should not have changed');
-
-  assert.deepEqual(recordArray.map(x => x.name), ['Scumbag Penner']);
 });

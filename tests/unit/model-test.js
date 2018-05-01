@@ -928,47 +928,6 @@ test('can ask if record with a given id is loaded', function(assert) {
   assert.equal(store.hasRecordForId('person', 4), false, 'should not have person with id 4');
 });
 
-test("a listener can be added to a record", function(assert) {
-  let count = 0;
-  let F = function() { count++; };
-
-  let record = store.createRecord('person');
-
-  record.on('event!', F);
-  run(() => record.trigger('event!'));
-
-  assert.equal(count, 1, 'the event was triggered');
-
-  run(() => record.trigger('event!'));
-
-  assert.equal(count, 2, 'the event was triggered');
-});
-
-test('when an event is triggered on a record the method with the same name is invoked with arguments', function(assert) {
-  let count = 0;
-  let F = function() { count++; };
-  let record = store.createRecord('person');
-
-  record.eventNamedMethod = F;
-
-  run(() => record.trigger('eventNamedMethod'));
-
-  assert.equal(count, 1, "the corresponding method was called");
-});
-
-test('when a method is invoked from an event with the same name the arguments are passed through', function(assert) {
-  let eventMethodArgs = null;
-  let F = function() { eventMethodArgs = arguments; };
-  let record = store.createRecord('person');
-
-  record.eventThatTriggersMethod = F;
-
-  run(() => record.trigger('eventThatTriggersMethod', 1, 2));
-
-  assert.equal(eventMethodArgs[0], 1);
-  assert.equal(eventMethodArgs[1], 2);
-});
-
 function converts(assert, type, provided, expected, options = {}) {
   const Model = DS.Model.extend({
     name: DS.attr(type, options)

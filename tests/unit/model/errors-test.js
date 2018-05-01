@@ -16,20 +16,12 @@ function updateErrors(func, assert) {
   assert.expectWarning(func, 'Interacting with a record errors object will no longer change the record state.');
 }
 
-AssertPrototype.becameInvalid = function becameInvalid(eventName) {
-  if (eventName === 'becameInvalid') {
-    this.ok(true, 'becameInvalid send');
-  } else {
-    this.ok(false, eventName + ' is send instead of becameInvalid');
-  }
+AssertPrototype.becameInvalid = function becameInvalid() {
+  this.ok(true, 'becameInvalid was called');
 }.bind(AssertPrototype);
 
-AssertPrototype.becameValid = function becameValid(eventName) {
-  if (eventName === 'becameValid') {
-    this.ok(true, 'becameValid send');
-  } else {
-    this.ok(false, eventName + ' is send instead of becameValid');
-  }
+AssertPrototype.becameValid = function becameValid() {
+  this.ok(true, 'becameValid was called');
 }.bind(AssertPrototype);
 
 AssertPrototype.unexpectedSend = function unexpectedSend(eventName) {
@@ -39,9 +31,10 @@ AssertPrototype.unexpectedSend = function unexpectedSend(eventName) {
 testInDebug('add error', function(assert) {
   assert.expect(10);
 
-  errors.trigger = assert.becameInvalid;
+  errors.becameInvalid = assert.becameInvalid;
   updateErrors(() => errors.add('firstName', 'error'), assert);
-  errors.trigger = assert.unexpectedSend;
+  errors.becameInvalid = assert.unexpectedSend;
+  errors.becameValid = assert.unexpectedSend;
   assert.ok(errors.has('firstName'), 'it has firstName errors');
   assert.equal(errors.get('length'), 1, 'it has 1 error');
   updateErrors(() => errors.add('firstName', ['error1', 'error2']), assert);
@@ -56,9 +49,10 @@ testInDebug('get error', function(assert) {
   assert.expect(11);
 
   assert.ok(errors.get('firstObject') === undefined, 'returns undefined');
-  errors.trigger = assert.becameInvalid;
+  errors.becameInvalid = assert.becameInvalid;
   updateErrors(() => errors.add('firstName', 'error'), assert);
-  errors.trigger = assert.unexpectedSend;
+  errors.becameInvalid = assert.unexpectedSend;
+  errors.becameValid = assert.unexpectedSend;
   assert.ok(errors.get('firstName').length === 1, 'returns errors');
   assert.deepEqual(errors.get('firstObject'), { attribute: 'firstName', message: 'error' });
   updateErrors(() => errors.add('firstName', 'error2'), assert);
@@ -79,11 +73,12 @@ testInDebug('get error', function(assert) {
 testInDebug('remove error', function(assert) {
   assert.expect(8);
 
-  errors.trigger = assert.becameInvalid;
+  errors.becameInvalid = assert.becameInvalid;
   updateErrors(() => errors.add('firstName', 'error'), assert);
-  errors.trigger = assert.becameValid;
+  errors.becameValid = assert.becameValid;
   updateErrors(() => errors.remove('firstName'), assert);
-  errors.trigger = assert.unexpectedSend;
+  errors.becameInvalid = assert.unexpectedSend;
+  errors.becameValid = assert.unexpectedSend;
   assert.ok(!errors.has('firstName'), 'it has no firstName errors');
   assert.equal(errors.get('length'), 0, 'it has 0 error');
   assert.ok(errors.get('isEmpty'), 'it is empty');
@@ -93,14 +88,15 @@ testInDebug('remove error', function(assert) {
 testInDebug('remove same errors fromm different attributes', function(assert) {
   assert.expect(9);
 
-  errors.trigger = assert.becameInvalid;
+  errors.becameInvalid = assert.becameInvalid;
   updateErrors(() => errors.add('firstName', 'error'), assert);
   updateErrors(() => errors.add('lastName', 'error'), assert);
-  errors.trigger = assert.unexpectedSend;
+  errors.becameInvalid = assert.unexpectedSend;
+  errors.becameValid = assert.unexpectedSend;
   assert.equal(errors.get('length'), 2, 'it has 2 error');
   updateErrors(() => errors.remove('firstName'), assert);
   assert.equal(errors.get('length'), 1, 'it has 1 error');
-  errors.trigger = assert.becameValid;
+  errors.becameValid = assert.becameValid;
   updateErrors(() => errors.remove('lastName'), assert);
   assert.ok(errors.get('isEmpty'), 'it is empty');
 });
@@ -108,12 +104,13 @@ testInDebug('remove same errors fromm different attributes', function(assert) {
 testInDebug('clear errors', function(assert) {
   assert.expect(8);
 
-  errors.trigger = assert.becameInvalid;
+  errors.becameInvalid = assert.becameInvalid;
   updateErrors(() => errors.add('firstName', ['error', 'error1']), assert);
   assert.equal(errors.get('length'), 2, 'it has 2 errors');
-  errors.trigger = assert.becameValid;
+  errors.becameValid = assert.becameValid;
   updateErrors(() => errors.clear(), assert);
-  errors.trigger = assert.unexpectedSend;
+  errors.becameValid = assert.unexpectedSend;
+  errors.becameInvalid = assert.unexpectedSend;
   assert.ok(!errors.has('firstName'), 'it has no firstName errors');
   assert.equal(errors.get('length'), 0, 'it has 0 error');
   updateErrors(() => errors.clear(), assert);

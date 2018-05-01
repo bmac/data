@@ -111,11 +111,6 @@ export const PromiseBelongsTo = PromiseObject.extend({
 
     * `reload()`
     * `createRecord()`
-    * `on()`
-    * `one()`
-    * `trigger()`
-    * `off()`
-    * `has()`
 
   @class PromiseManyArray
   @namespace DS
@@ -135,17 +130,7 @@ export const PromiseManyArray = PromiseArray.extend({
     return this;
   },
 
-  createRecord: proxyToContent('createRecord'),
-
-  on: proxyToContent('on'),
-
-  one: proxyToContent('one'),
-
-  trigger: proxyToContent('trigger'),
-
-  off: proxyToContent('off'),
-
-  has: proxyToContent('has')
+  createRecord: proxyToContent('createRecord')
 });
 
 export function promiseManyArray(promise, label) {

@@ -991,9 +991,13 @@ export default class InternalModel {
     }
     let triggers = this._deferredTriggers;
     let record = this._record;
-    let trigger = record.trigger;
     for (let i = 0, l= triggers.length; i<l; i++) {
-      trigger.apply(record, triggers[i]);
+      let functionName = triggers[i][0];
+      let fn = record[functionName];
+      if (fn) {
+        let args = triggers[i].slice(1);
+        fn.apply(record, args);
+      }
     }
 
     triggers.length = 0;

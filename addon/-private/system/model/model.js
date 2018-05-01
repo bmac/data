@@ -1,7 +1,6 @@
 import ComputedProperty from '@ember/object/computed';
 import { isNone } from '@ember/utils';
 import EmberError from '@ember/error';
-import Evented from '@ember/object/evented';
 import EmberObject, {
   computed,
   get
@@ -83,9 +82,8 @@ const retrieveFromCurrentState = computed('currentState', function(key) {
   @class Model
   @namespace DS
   @extends Ember.Object
-  @uses Ember.Evented
 */
-const Model = EmberObject.extend(Evented, {
+const Model = EmberObject.extend({
   _internalModel: null,
   store: null,
   __defineNonEnumerable(property) {
@@ -460,63 +458,6 @@ const Model = EmberObject.extend(Evented, {
     return serializer.serialize(snapshot, options);
   },
 
-  /**
-    Fired when the record is ready to be interacted with,
-    that is either loaded from the server or created locally.
-
-    @event ready
-  */
-  ready: null,
-
-  /**
-    Fired when the record is loaded from the server.
-
-    @event didLoad
-  */
-  didLoad: null,
-
-  /**
-    Fired when the record is updated.
-
-    @event didUpdate
-  */
-  didUpdate: null,
-
-  /**
-    Fired when a new record is commited to the server.
-
-    @event didCreate
-  */
-  didCreate: null,
-
-  /**
-    Fired when the record is deleted.
-
-    @event didDelete
-  */
-  didDelete: null,
-
-  /**
-    Fired when the record becomes invalid.
-
-    @event becameInvalid
-  */
-  becameInvalid: null,
-
-  /**
-    Fired when the record enters the error state.
-
-    @event becameError
-  */
-  becameError: null,
-
-  /**
-    Fired when the record is rolled back.
-
-    @event rolledBack
-  */
-  rolledBack: null,
-
   //TODO Do we want to deprecate these?
   /**
     @method send
@@ -694,24 +635,6 @@ const Model = EmberObject.extend(Evented, {
     return this._internalModel.changedAttributes();
   },
 
-  //TODO discuss with tomhuda about events/hooks
-  //Bring back as hooks?
-  /**
-    @method adapterWillCommit
-    @private
-  adapterWillCommit: function() {
-    this.send('willCommit');
-  },
-
-  /**
-    @method adapterDidDirty
-    @private
-  adapterDidDirty: function() {
-    this.send('becomeDirty');
-    this.updateRecordArraysLater();
-  },
-  */
-
   /**
     If the model `hasDirtyAttributes` this function will discard any unsaved
     changes. If the model `isNew` it will be removed from the store.
@@ -834,31 +757,6 @@ const Model = EmberObject.extend(Evented, {
     return PromiseObject.create({
       promise: this._internalModel.reload(wrappedAdapterOptions).then(() => this)
     });
-  },
-
-
-  /**
-    Override the default event firing from Ember.Evented to
-    also call methods with the given name.
-
-    @method trigger
-    @private
-    @param {String} name
-  */
-  trigger(name) {
-    let fn = this[name];
-
-    if (typeof fn === 'function') {
-      let length = arguments.length;
-      let args = new Array(length - 1);
-
-      for (let i = 1; i < length; i++) {
-        args[i - 1] = arguments[i];
-      }
-      fn.apply(this, args)
-    }
-
-    this._super(...arguments);
   },
 
   attr() {

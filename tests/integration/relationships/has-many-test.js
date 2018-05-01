@@ -28,7 +28,7 @@ let Book, Chapter, Page;
 
 const { attr, hasMany, belongsTo } = DS;
 
-module("integration/relationships/has_many - Has-Many Relationships", {
+module("integration/relationships/has-many - Has-Many Relationships", {
   beforeEach() {
     User = DS.Model.extend({
       name: attr('string'),
@@ -1129,71 +1129,6 @@ test("PromiseArray proxies createRecord to its ManyArray once the hasMany is loa
       assert.equal(comments.get('length'), 3, "comments have 3 length, including new record");
     });
   });
-});
-
-test("PromiseArray proxies evented methods to its ManyArray", function(assert) {
-  assert.expect(6);
-
-  Post.reopen({
-    comments: DS.hasMany('comment', { async: true })
-  });
-
-  env.adapter.findHasMany = function(store, snapshot, link, relationship) {
-    return resolve({ data: [
-      { id: 1, type: 'comment', attributes: { body: "First" } },
-      { id: 2, type: 'comment', attributes: { body: "Second" } }
-    ]});
-  };
-  let post, comments;
-
-  run(function() {
-    env.store.push({
-      data: {
-        type: 'post',
-        id: '1',
-        relationships: {
-          comments: {
-            links: {
-              related: 'someLink'
-            }
-          }
-        }
-      }
-    });
-    post = env.store.peekRecord('post', 1);
-    comments = post.get('comments');
-  });
-
-
-  comments.on('on-event', function() {
-    assert.ok(true);
-  });
-
-  run(function() {
-    comments.trigger('on-event');
-  });
-
-  assert.equal(comments.has('on-event'), true);
-
-  comments.on('off-event', function() {
-    assert.ok(false);
-  });
-
-  comments.off('off-event');
-
-  assert.equal(comments.has('off-event'), false);
-
-  comments.one('one-event', function() {
-    assert.ok(true);
-  });
-
-  assert.equal(comments.has('one-event'), true);
-
-  run(function() {
-    comments.trigger('one-event');
-  });
-
-  assert.equal(comments.has('one-event'), false);
 });
 
 test("An updated `links` value should invalidate a relationship cache", function(assert) {

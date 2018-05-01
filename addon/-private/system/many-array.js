@@ -3,7 +3,6 @@
 */
 import { all } from 'rsvp';
 
-import Evented from '@ember/object/evented';
 import MutableArray from '@ember/array/mutable';
 import EmberObject, { get } from '@ember/object';
 import { assert } from '@ember/debug';
@@ -52,9 +51,9 @@ import diffArray from './diff-array';
   @class ManyArray
   @namespace DS
   @extends Ember.Object
-  @uses Ember.MutableArray, Ember.Evented
+  @uses Ember.MutableArray
 */
-export default EmberObject.extend(MutableArray, Evented, {
+export default EmberObject.extend(MutableArray, {
   init() {
     this._super(...arguments);
 

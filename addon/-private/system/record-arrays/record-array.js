@@ -2,8 +2,6 @@
   @module ember-data
 */
 
-import Evented from '@ember/object/evented';
-
 import ArrayProxy from '@ember/array/proxy';
 import { set, get, computed } from '@ember/object';
 import { Promise } from 'rsvp';
@@ -20,10 +18,9 @@ import SnapshotRecordArray from "../snapshot-record-array";
   @class RecordArray
   @namespace DS
   @extends Ember.ArrayProxy
-  @uses Ember.Evented
 */
 
-export default ArrayProxy.extend(Evented, {
+export default ArrayProxy.extend({
   init() {
     this._super(...arguments);
 

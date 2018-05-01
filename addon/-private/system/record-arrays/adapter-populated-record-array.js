@@ -1,4 +1,3 @@
-import { once } from '@ember/runloop';
 import { A } from '@ember/array';
 import { get } from '@ember/object';
 import RecordArray from "./record-array";
@@ -86,8 +85,6 @@ export default RecordArray.extend({
 
     associateWithRecordArray(internalModels, this);
 
-    // TODO: should triggering didLoad event be the last action of the runLoop?
-    once(this, 'trigger', 'didLoad');
     heimdall.stop(token);
   }
 });

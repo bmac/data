@@ -1,10 +1,11 @@
 import { mapBy, not } from '@ember/object/computed';
-import Evented from '@ember/object/evented';
 import ArrayProxy from '@ember/array/proxy';
 import { set, get, computed } from '@ember/object';
 import { makeArray, A } from '@ember/array';
 import MapWithDefault from '../map-with-default';
 import { warn } from '@ember/debug';
+
+function noop() {}
 
 /**
 @module ember-data
@@ -83,9 +84,11 @@ import { warn } from '@ember/debug';
   @namespace DS
   @extends Ember.Object
   @uses Ember.Enumerable
-  @uses Ember.Evented
  */
-export default ArrayProxy.extend(Evented, {
+export default ArrayProxy.extend({
+
+  becameInvalid() {},
+  becameValid() {},
 
   /**
     Register with target handler
@@ -94,8 +97,8 @@ export default ArrayProxy.extend(Evented, {
     @private
   */
   _registerHandlers(target, becameInvalid, becameValid) {
-    this.on('becameInvalid', target, becameInvalid);
-    this.on('becameValid', target, becameValid);
+    this.becameInvalid = becameInvalid.bind(target) || noop
+    this.becameValid = becameValid.bind(target) || noop
   },
 
   /**
@@ -211,7 +214,7 @@ export default ArrayProxy.extend(Evented, {
     this._add(attribute, messages);
 
     if (wasEmpty && !get(this, 'isEmpty')) {
-      this.trigger('becameInvalid');
+      this.becameInvalid();
     }
   },
 
@@ -300,7 +303,7 @@ export default ArrayProxy.extend(Evented, {
     this._remove(attribute);
 
     if (get(this, 'isEmpty')) {
-      this.trigger('becameValid');
+      this.becameValid();
     }
   },
 
@@ -351,7 +354,7 @@ export default ArrayProxy.extend(Evented, {
     if (get(this, 'isEmpty')) { return; }
 
     this._clear();
-    this.trigger('becameValid');
+    this.becameValid();
   },
 
 
