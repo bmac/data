@@ -77,7 +77,7 @@ const path = require('path');
 
 const projectRoot = path.resolve(__dirname, '../');
 // we share this for the build
-const tarballDir = path.join(projectRoot, '../__tarball-cache');
+const tarballDir = path.relative(__dirname, path.join(projectRoot, '../__tarball-cache'));
 const packagesDir = path.join(projectRoot, './packages');
 const packages = fs.readdirSync(packagesDir);
 const OurPackages = {};

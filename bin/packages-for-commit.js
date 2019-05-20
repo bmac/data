@@ -56,5 +56,5 @@ AllPackages.forEach(packageName => {
     `);
 
   // cleanup
-  fs.writeFileSync(pkg.fileLocation, pkg.originalPackageInfo);
+  //fs.writeFileSync(pkg.fileLocation, pkg.originalPackageInfo);
 });
